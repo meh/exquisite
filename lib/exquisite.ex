@@ -325,7 +325,7 @@ defmodule Exquisite do
     if id = identify(ref, table) do
       { name, id }
     else
-      { :unquote, [], whole }
+      external(whole)
     end
   end
 
@@ -334,7 +334,7 @@ defmodule Exquisite do
     if id = identify(ref, table) do
       { :is_record, id, name, length(name.__record__(:fields)) + 1 }
     else
-      { :unquote, [], whole }
+      external(whole)
     end
   end
 
@@ -343,7 +343,7 @@ defmodule Exquisite do
     if id = identify(ref, table) do
       { :is_record, id, name, size }
     else
-      { :unquote, [], whole }
+      external(whole)
     end
   end
 
@@ -352,7 +352,7 @@ defmodule Exquisite do
     if id = identify(ref, table) do
       { :element, id, index + 1 }
     else
-      { :unquote, [], whole }
+      external(whole)
     end
   end
 
@@ -361,7 +361,7 @@ defmodule Exquisite do
     if id = identify(ref, table) do
       { name, id }
     else
-      { :unquote, [], whole }
+      external(whole)
     end
   end
 
@@ -370,7 +370,7 @@ defmodule Exquisite do
     if id = identify(ref, table) do
       { :bnot, id }
     else
-      { :unquote, [], whole }
+      external(whole)
     end
   end
 
@@ -389,7 +389,7 @@ defmodule Exquisite do
     if id = identify(ref, table) do
       id
     else
-      { :unquote, [], [whole] }
+      external(whole)
     end
   end
 
@@ -398,7 +398,7 @@ defmodule Exquisite do
     if id = identify(whole, table) do
       id
     else
-      { :unquote, [], [whole] }
+      external(whole)
     end
   end
 
@@ -412,9 +412,19 @@ defmodule Exquisite do
     { Enum.map(desc, internal(&1, table)) |> list_to_tuple }
   end
 
-  # otherwise just unquote
+  # list
+  defp internal(value, table) when is_list(value) do
+    Enum.map value, internal(&1, table)
+  end
+
+  # number or string
+  defp internal(value, _) when is_binary(value) or is_number(value) do
+    value
+  end
+
+  # otherwise just treat it as external
   defp internal(whole, _) do
-    { :unquote, [], [whole] }
+    external(whole)
   end
 
   # identify a name from a table
@@ -432,5 +442,22 @@ defmodule Exquisite do
 
   defp identify(name) do
     atom_to_binary(name)
+  end
+
+  defp external(whole) do
+    { :unquote, [], quote do: [Exquisite.convert(unquote(whole))] }
+  end
+
+  @doc false
+  def convert(data) when is_tuple(data) do
+    { tuple_to_list(data) |> Enum.map(convert(&1)) |> list_to_tuple }
+  end
+
+  def convert(data) when is_list(data) do
+    Enum.map data, convert(&1)
+  end
+
+  def convert(data) do
+    data
   end
 end
