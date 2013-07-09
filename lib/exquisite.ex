@@ -181,6 +181,10 @@ defmodule Exquisite do
     { Enum.reverse(result) |> list_to_tuple, table, last }
   end
 
+  defp head(:_, table, _, last) do
+    { :_, table, last }
+  end
+
   defp head(descriptor, table, name, last) when is_atom(descriptor) do
     reference = :"$#{last}"
 
