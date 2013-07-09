@@ -402,6 +402,16 @@ defmodule Exquisite do
     end
   end
 
+  # { a, b }
+  defp internal({ a, b }, table) do
+    {{ internal(a, table), internal(b, table) }}
+  end
+
+  # { a, b, c }
+  defp internal({ :'{}', _, desc }, table) do
+    { Enum.map(desc, internal(&1, table)) |> list_to_tuple }
+  end
+
   # otherwise just unquote
   defp internal(whole, _) do
     { :unquote, [], [whole] }
