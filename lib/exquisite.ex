@@ -135,7 +135,7 @@ defmodule Exquisite do
   end
 
   defp descriptor({ :__aliases__, _, _ } = record_alias, __CALLER__) do
-    IO.inspect record(record_alias, __CALLER__)
+    record(record_alias, __CALLER__)
   end
 
   defp descriptor({ name, _, nil }, _) do
