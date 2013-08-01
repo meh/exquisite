@@ -110,6 +110,11 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
+  # Exquisite.match __MODULE__, *
+  defmacro match({ :__MODULE__, _, _ } = desc, rest) do
+    execute(desc, rest)
+  end
+
   defp descriptor({ :"{}", _, desc }, __CALLER__) do
     Enum.map desc, descriptor(&1, __CALLER__)
   end
@@ -138,7 +143,11 @@ defmodule Exquisite do
     record(record_alias, __CALLER__)
   end
 
-  defp descriptor({ name, _, nil }, _) do
+  defp descriptor({ :__MODULE__, _, _ } = record_alias, __CALLER__) do
+    record(record_alias, __CALLER__)
+  end
+
+  defp descriptor({ name, _, _ }, _) do
     name
   end
 
