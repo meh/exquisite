@@ -76,7 +76,7 @@ defmodule Exquisite do
   end
 
   @doc """
-  I like trains.
+  Generate a match_spec based on the passed query.
   """
   defmacro match(clause, rest // [])
 
