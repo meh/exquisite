@@ -22,4 +22,18 @@ defmodule ExquisiteTest do
 
     assert Exquisite.run!(s, { from, to }) == 2
   end
+
+  defrecord Foo, [:a, :b] do
+    def test do
+      Exquisite.match __MODULE__,
+        where: b == 2,
+        select: a
+    end
+  end
+
+  test "works with __MODULE__" do
+    s = Foo.test
+    assert Exquisite.run!(s, Foo[a: 2, b: 3]) == false
+    assert Exquisite.run!(s, Foo[a: 3, b: 2]) == 3
+  end
 end
