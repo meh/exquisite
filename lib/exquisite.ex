@@ -123,19 +123,19 @@ defmodule Exquisite do
     [descriptor(a, __CALLER__), descriptor(b, __CALLER__)]
   end
 
-  defp descriptor({ :in, _, [{ name, _, nil }, { :in, _, _ } = desc] }, __CALLER__) do
+  defp descriptor({ :in, _, [{ name, _, _ }, { :in, _, _ } = desc] }, __CALLER__) do
     { name, descriptor(desc, __CALLER__) }
   end
 
-  defp descriptor({ :in, _, [{ name, _, nil }, { :__aliases__, _, _ } = record_alias] }, __CALLER__) do
+  defp descriptor({ :in, _, [{ name, _, _ }, { :__aliases__, _, _ } = record_alias] }, __CALLER__) do
     { name, descriptor(record_alias, __CALLER__) }
   end
 
-  defp descriptor({ :in, _, [{ name, _, nil }, { :"{}", _, _ } = desc] }, __CALLER__) do
+  defp descriptor({ :in, _, [{ name, _, _ }, { :"{}", _, _ } = desc] }, __CALLER__) do
     { name, descriptor(desc, __CALLER__) }
   end
 
-  defp descriptor({ :in, _, [{ name, _, nil }, { a, b }] }, __CALLER__) do
+  defp descriptor({ :in, _, [{ name, _, _ }, { a, b }] }, __CALLER__) do
     { name, [descriptor(a, __CALLER__), descriptor(b, __CALLER__)] }
   end
 
@@ -394,15 +394,6 @@ defmodule Exquisite do
     { name }
   end
 
-  # foo
-  defp internal({ ref, _, nil } = whole, table, __CALLER__) do
-    if id = identify(ref, table) do
-      id
-    else
-      external(whole)
-    end
-  end
-
   # foo.bar
   defp internal({{ :., _, _ }, _, _ } = whole, table, __CALLER__) do
     if id = identify(whole, table) do
@@ -420,6 +411,15 @@ defmodule Exquisite do
   # { a, b, c }
   defp internal({ :'{}', _, desc }, table, __CALLER__) do
     { Enum.map(desc, internal(&1, table, __CALLER__)) |> list_to_tuple }
+  end
+
+  # foo
+  defp internal({ ref, _, _ } = whole, table, __CALLER__) do
+    if id = identify(ref, table) do
+      id
+    else
+      external(whole)
+    end
   end
 
   # list
