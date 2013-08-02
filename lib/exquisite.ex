@@ -115,6 +115,10 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
+  defmacro match(name, rest) when is_atom(name) do
+    execute(name, rest)
+  end
+
   defp descriptor({ :"{}", _, desc }, __CALLER__) do
     Enum.map desc, descriptor(&1, __CALLER__)
   end
@@ -145,6 +149,10 @@ defmodule Exquisite do
 
   defp descriptor({ :__MODULE__, _, _ } = record_alias, __CALLER__) do
     record(record_alias, __CALLER__)
+  end
+
+  defp descriptor(name, __CALLER__) when is_atom(name) do
+    record(name, __CALLER__)
   end
 
   defp descriptor({ name, _, _ }, _) do
