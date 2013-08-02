@@ -36,4 +36,32 @@ defmodule ExquisiteTest do
     assert Exquisite.run!(s, Foo[a: 2, b: 3]) == false
     assert Exquisite.run!(s, Foo[a: 3, b: 2]) == 3
   end
+
+  defmodule Helpers do
+    defmacro get_by_key(module, key, value) do
+      quote do
+        s = Exquisite.match unquote(module),
+          where: unquote(key) == unquote(value)
+      end
+    end
+  end
+
+  defrecord Bar, [:id, :foo] do
+    require Helpers
+
+    defmacro get_by_key(key, value) do
+      quote do
+        Helpers.get_by_key(unquote(__MODULE__),
+          unquote(key), unquote(value))
+      end
+    end
+  end
+
+  test "runs properly with macros" do
+    require Bar
+    require Helpers
+
+    assert Exquisite.run(Bar.get_by_key(foo, 3), [Bar[id: 2, foo: 3], Bar[id: 3, foo: 4]]) ==
+      [Bar[id: 2, foo: 3]]
+  end
 end
