@@ -12,7 +12,15 @@ defmodule ExquisiteTest do
     assert Exquisite.run!(s, { { 1, 2 }, 3 }) == 3
   end
 
-  test "tuples inside tuples work" do
+  test "works with tuples inside tuples" do
+    s = Exquisite.match { { a, b }, c },
+      where:  a == b,
+      select: c
+
+    assert Exquisite.run!(s, { { 1, 1 }, 2 }) == 2
+  end
+
+  test "works with tuples inside tuples as values" do
     from = {{2013,1,1},{1,1,1}}
     to   = {{2013,2,2},{1,1,1}}
 
@@ -29,6 +37,14 @@ defmodule ExquisiteTest do
       select: foo.b
 
     assert Exquisite.run!(s, { { 1, 2 }, 3 }) == 3
+  end
+
+  test "works with named tuple inside tuple" do
+    s = Exquisite.match foo in { a in { a, b }, b },
+      where:  foo.a.a == foo.a.b,
+      select: foo.b
+
+    assert Exquisite.run!(s, { { 1, 1 }, 3 }) == 3
   end
 
   defrecord Foo, [:a, :b] do
@@ -105,5 +121,21 @@ defmodule ExquisiteTest do
        select: baz.a.b
 
     assert Exquisite.run!(s, [Baz[a: Foo[a: 4, b: 4]], Baz[a: Foo[a: 2, b: 2]]]) == [2]
+  end
+
+  test "works with tuples in record definitions" do
+    s = Exquisite.match Baz[a: { a, b }],
+      where:  a.a == a.b,
+      select: b
+
+    assert Exquisite.run!(s, Baz[a: { 1, 1 }, b: 2]) == 2
+  end
+
+  test "works with tuples in named record definitions" do
+    s = Exquisite.match baz in Baz[a: { a, b }],
+      where:  baz.a.a == baz.a.b,
+      select: baz.b
+
+    assert Exquisite.run!(s, Baz[a: { 1, 1 }, b: 2]) == 2
   end
 end
