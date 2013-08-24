@@ -90,6 +90,11 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
+  # Exquisite.match a in Record[], *
+  defmacro match({ :in, _, [_, { { :., _, [Kernel, :access] }, _, _ }] } = desc, rest) do
+    execute(desc, rest)
+  end
+
   # Exquisite.match a in { _, _ }, *
   defmacro match({ :in, _, [_, { _, _ }] } = desc, rest) do
     execute(desc, rest)
@@ -115,7 +120,7 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
-  # Exquisite.match Record[foo: bar], *
+  # Exquisite.match Record[], *
   defmacro match({ { :., _, [Kernel, :access] }, _, _ } = desc, rest) do
     execute(desc, rest)
   end
