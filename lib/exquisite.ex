@@ -141,8 +141,16 @@ defmodule Exquisite do
     { name, descriptor(desc, __CALLER__) }
   end
 
-  defp descriptor({ :in, _, [{ name, _, _ }, { :__aliases__, _, _ } = record_alias] }, __CALLER__) do
-    { name, descriptor(record_alias, __CALLER__) }
+  defp descriptor({ :in, _, [{ name, _, _ }, { :__aliases__, _, _ } = desc] }, __CALLER__) do
+    { name, descriptor(desc, __CALLER__) }
+  end
+
+  defp descriptor({ :in, _, [{ name, _, _ }, { :__MODULE__, _, _ } = desc] }, __CALLER__) do
+    { name, descriptor(desc, __CALLER__) }
+  end
+
+  defp descriptor({ :in, _, [{ name, _, _ }, { { :., _, [Kernel, :access] }, _, [_, _] } = desc] }, __CALLER__) do
+    { name, descriptor(desc, __CALLER__) }
   end
 
   defp descriptor({ :in, _, [{ name, _, _ }, { :"{}", _, _ } = desc] }, __CALLER__) do
@@ -161,10 +169,6 @@ defmodule Exquisite do
     record(record_alias, __CALLER__)
   end
 
-  defp descriptor(name, __CALLER__) when is_atom(name) do
-    record(name, __CALLER__)
-  end
-
   defp descriptor({ { :., _, [Kernel, :access] }, _, [record_alias, descriptors] }, __CALLER__) do
     for  = record(record_alias, __CALLER__)
     desc = for |> elem(1) |> Enum.map fn name ->
@@ -176,6 +180,10 @@ defmodule Exquisite do
     end
 
     for |> set_elem(1, desc)
+  end
+
+  defp descriptor(name, __CALLER__) when is_atom(name) do
+    record(name, __CALLER__)
   end
 
   defp descriptor({ name, _, _ }, _) do
