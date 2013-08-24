@@ -115,6 +115,11 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
+  # Exquisite.match Record[foo: bar], *
+  defmacro match({ { :., _, [Kernel, :access] }, _, _ } = desc, rest) do
+    execute(desc, rest)
+  end
+
   defmacro match(name, rest) when is_atom(name) do
     execute(name, rest)
   end
@@ -153,6 +158,19 @@ defmodule Exquisite do
 
   defp descriptor(name, __CALLER__) when is_atom(name) do
     record(name, __CALLER__)
+  end
+
+  defp descriptor({ { :., _, [Kernel, :access] }, _, [record_alias, descriptors] }, __CALLER__) do
+    for  = record(record_alias, __CALLER__)
+    desc = for |> elem(1) |> Enum.map fn name ->
+      if desc = descriptors[name] do
+        { name, descriptor(desc, __CALLER__) }
+      else
+        name
+      end
+    end
+
+    for |> set_elem(1, desc)
   end
 
   defp descriptor({ name, _, _ }, _) do
@@ -207,6 +225,7 @@ defmodule Exquisite do
 
   defp head({ atom, descriptor }, table, name, last) do
     cond do
+      # it's a record
       match?("Elixir." <> _, atom_to_binary(atom)) ->
         { result, table, last } = Enum.reduce descriptor, { [], table, last }, fn(desc, { results, table, last }) ->
           case head(desc, table, name, last) do
@@ -217,6 +236,7 @@ defmodule Exquisite do
 
         { [atom | Enum.reverse(result)] |> list_to_tuple, table, last }
 
+      # it's a list of names
       is_list(descriptor) ->
         { result, table, last } = Enum.reduce descriptor, { [], table, last }, fn(desc, { results, table, last }) ->
           case head(desc, table, [atom_to_binary(atom) | name], last) do
@@ -230,6 +250,7 @@ defmodule Exquisite do
 
         { result, table, last }
 
+      # it's a named list of names
       is_tuple(descriptor) ->
         case head(descriptor, table, [atom_to_binary(atom) | name], last) do
           { result, table, last } ->
