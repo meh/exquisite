@@ -85,13 +85,19 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
-  # Exquisite.match a in { _, _, _ }, *
-  defmacro match({ :in, _, [_, { :"{}", _, [_] }] } = desc, rest) do
+  # Exquisite.match a in :Record, *
+  defmacro match({ :in, _, [_, name] } = desc, rest) when is_atom(name) do
     execute(desc, rest)
   end
 
   # Exquisite.match a in Record[], *
   defmacro match({ :in, _, [_, { { :., _, [Kernel, :access] }, _, _ }] } = desc, rest) do
+    execute(desc, rest)
+  end
+
+
+  # Exquisite.match a in { _, _, _ }, *
+  defmacro match({ :in, _, [_, { :"{}", _, [_] }] } = desc, rest) do
     execute(desc, rest)
   end
 
@@ -146,6 +152,10 @@ defmodule Exquisite do
   end
 
   defp descriptor({ :in, _, [{ name, _, _ }, { :__MODULE__, _, _ } = desc] }, __CALLER__) do
+    { name, descriptor(desc, __CALLER__) }
+  end
+
+  defp descriptor({ :in, _, [{ name, _, _ }, record_name = desc] }, __CALLER__) when is_atom(record_name) do
     { name, descriptor(desc, __CALLER__) }
   end
 

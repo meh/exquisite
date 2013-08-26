@@ -92,9 +92,17 @@ defmodule ExquisiteTest do
   defrecord Baz, [:a, :b]
 
   test "works with records" do
-     s = Exquisite.match Baz,
-       where:  a == 2,
-       select: b
+    s = Exquisite.match Baz,
+      where:  a == 2,
+      select: b
+
+    assert Exquisite.run!(s, [Baz[a: 4, b: 4], Baz[a: 2, b: 2]]) == [2]
+  end
+
+  test "works with records as atoms" do
+    s = Exquisite.match :'Elixir.ExquisiteTest.Baz',
+      where:  a == 2,
+      select: b
 
     assert Exquisite.run!(s, [Baz[a: 4, b: 4], Baz[a: 2, b: 2]]) == [2]
   end
@@ -138,4 +146,5 @@ defmodule ExquisiteTest do
 
     assert Exquisite.run!(s, Baz[a: { 1, 1 }, b: 2]) == 2
   end
+
 end
