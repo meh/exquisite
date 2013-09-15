@@ -136,7 +136,7 @@ defmodule Exquisite do
   end
 
   defp descriptor({ :"{}", _, desc }, __CALLER__) do
-    Enum.map desc, descriptor(&1, __CALLER__)
+    Enum.map desc, &descriptor(&1, __CALLER__)
   end
 
   defp descriptor({ a, b }, __CALLER__) do
@@ -462,7 +462,7 @@ defmodule Exquisite do
 
   # { a, b, c }
   defp internal({ :'{}', _, desc }, table, __CALLER__) do
-    { Enum.map(desc, internal(&1, table, __CALLER__)) |> list_to_tuple }
+    { Enum.map(desc, &internal(&1, table, __CALLER__)) |> list_to_tuple }
   end
 
   # foo
@@ -476,7 +476,7 @@ defmodule Exquisite do
 
   # list
   defp internal(value, table, __CALLER__) when is_list(value) do
-    Enum.map value, internal(&1, table, __CALLER__)
+    Enum.map value, &internal(&1, table, __CALLER__)
   end
 
   # number or string
@@ -512,11 +512,11 @@ defmodule Exquisite do
 
   @doc false
   def convert(data) when is_tuple(data) do
-    { tuple_to_list(data) |> Enum.map(convert(&1)) |> list_to_tuple }
+    { tuple_to_list(data) |> Enum.map(&convert(&1)) |> list_to_tuple }
   end
 
   def convert(data) when is_list(data) do
-    Enum.map data, convert(&1)
+    Enum.map data, &convert(&1)
   end
 
   def convert(data) do
