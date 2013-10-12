@@ -289,11 +289,11 @@ defmodule Exquisite do
   end
 
   defp condition(clause, table, __CALLER__) do
-    [internal(Macro.expand_all(clause, __CALLER__), table, __CALLER__)]
+    [internal(Macro.expand(clause, __CALLER__), table, __CALLER__)]
   end
 
   defp body(clause, table, __CALLER__) do
-    [internal(Macro.expand_all(clause, __CALLER__), table, __CALLER__)]
+    [internal(Macro.expand(clause, __CALLER__), table, __CALLER__)]
   end
 
   # not
