@@ -296,18 +296,27 @@ defmodule Exquisite do
     [internal(Macro.expand(clause, __CALLER__), table, __CALLER__)]
   end
 
+  # operator destructuring
+  defp internal({ :__op__, _, [name, left, right] }, table, __CALLER__) do
+    internal({ name, [], [left, right] }, table, __CALLER__)
+  end
+
+  defp internal({ :__op__, _, [name, a] }, table, __CALLER__) do
+    internal({ name, [], [a] }, table, __CALLER__)
+  end
+
   # not
   defp internal({ :not, _, [a] }, table, __CALLER__) do
     { :not, internal(a, table, __CALLER__) }
   end
 
   # and, gets converted to andalso
-  defp internal({ :and, _, [left, right] }, table, __CALLER__) do
+  defp internal({ op, _, [left, right] }, table, __CALLER__) when op in [:and, :andalso] do
     { :andalso, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
   end
 
   # or, gets converted to orelse
-  defp internal({ :or, _, [left, right] }, table, __CALLER__) do
+  defp internal({ op, _, [left, right] }, table, __CALLER__) when op in [:or, :orelse] do
     { :orelse, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
   end
 
