@@ -12,7 +12,7 @@ defmodule Exquisite do
   @spec run(spec, tuple | [tuple]) :: { :ok, term } | { :error, term }
   def run(spec, what) when is_tuple(what) do
     if :ets.is_compiled_ms(spec) do
-      run(spec, [what]) |> Enum.first
+      run(spec, [what]) |> List.first
     else
       :ets.test_ms(what, spec)
     end
