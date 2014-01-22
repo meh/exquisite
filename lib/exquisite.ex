@@ -95,7 +95,6 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
-
   # Exquisite.match a in { _, _, _ }, *
   defmacro match({ :in, _, [_, { :"{}", _, [_] }] } = desc, rest) do
     execute(desc, rest)
@@ -301,8 +300,16 @@ defmodule Exquisite do
     internal({ name, [], [left, right] }, table, __CALLER__)
   end
 
-  defp internal({ :__op__, _, [name, a] }, table, __CALLER__) do
-    internal({ name, [], [a] }, table, __CALLER__)
+  defp internal({ :__op__, _, [name, right] }, table, __CALLER__) do
+    internal({ name, [], [right] }, table, __CALLER__)
+  end
+
+  defp internal({ { :., _, [:erlang, name]}, _, [left, right] }, table, __CALLER__) do
+    internal({ name, [], [left, right] }, table, __CALLER__)
+  end
+
+  defp internal({ { :., _, [:erlang, name]}, _, [right] }, table, __CALLER__) do
+    internal({ name, [], [right] }, table, __CALLER__)
   end
 
   # not
