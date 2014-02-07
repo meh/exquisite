@@ -4,7 +4,7 @@ defmodule Exquisite.Mixfile do
   def project do
     [ app: :exquisite,
       version: "0.0.1",
-      elixir: "~> 0.12.2",
+      elixir: "~> 0.12.3",
       deps: deps ]
   end
 

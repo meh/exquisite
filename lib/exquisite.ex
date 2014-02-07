@@ -78,7 +78,7 @@ defmodule Exquisite do
   @doc """
   Generate a match_spec based on the passed query.
   """
-  defmacro match(clause, rest // [])
+  defmacro match(clause, rest \\ [])
 
   # Exquisite.match a in Record, *
   defmacro match({ :in, _, [_, { :__aliases__, _, _ }] } = desc, rest) do
