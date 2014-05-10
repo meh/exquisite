@@ -80,21 +80,6 @@ defmodule Exquisite do
   """
   defmacro match(clause, rest \\ [])
 
-  # Exquisite.match a in Record, *
-  defmacro match({ :in, _, [_, { :__aliases__, _, _ }] } = desc, rest) do
-    execute(desc, rest)
-  end
-
-  # Exquisite.match a in :Record, *
-  defmacro match({ :in, _, [_, name] } = desc, rest) when is_atom(name) do
-    execute(desc, rest)
-  end
-
-  # Exquisite.match a in Record[], *
-  defmacro match({ :in, _, [_, { { :., _, [Kernel, :access] }, _, _ }] } = desc, rest) do
-    execute(desc, rest)
-  end
-
   # Exquisite.match a in { _, _, _ }, *
   defmacro match({ :in, _, [_, { :"{}", _, [_] }] } = desc, rest) do
     execute(desc, rest)
@@ -115,21 +100,6 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
-  # Exquisite.match Record, *
-  defmacro match({ :__aliases__, _, _ } = desc, rest) do
-    execute(desc, rest)
-  end
-
-  # Exquisite.match __MODULE__, *
-  defmacro match({ :__MODULE__, _, _ } = desc, rest) do
-    execute(desc, rest)
-  end
-
-  # Exquisite.match Record[], *
-  defmacro match({ { :., _, [Kernel, :access] }, _, _ } = desc, rest) do
-    execute(desc, rest)
-  end
-
   defmacro match(name, rest) when is_atom(name) do
     execute(name, rest)
   end
@@ -146,53 +116,12 @@ defmodule Exquisite do
     { name, descriptor(desc, __CALLER__) }
   end
 
-  defp descriptor({ :in, _, [{ name, _, _ }, { :__aliases__, _, _ } = desc] }, __CALLER__) do
-    { name, descriptor(desc, __CALLER__) }
-  end
-
-  defp descriptor({ :in, _, [{ name, _, _ }, { :__MODULE__, _, _ } = desc] }, __CALLER__) do
-    { name, descriptor(desc, __CALLER__) }
-  end
-
-  defp descriptor({ :in, _, [{ name, _, _ }, record_name = desc] }, __CALLER__) when is_atom(record_name) do
-    { name, descriptor(desc, __CALLER__) }
-  end
-
-  defp descriptor({ :in, _, [{ name, _, _ }, { { :., _, [Kernel, :access] }, _, [_, _] } = desc] }, __CALLER__) do
-    { name, descriptor(desc, __CALLER__) }
-  end
-
   defp descriptor({ :in, _, [{ name, _, _ }, { :"{}", _, _ } = desc] }, __CALLER__) do
     { name, descriptor(desc, __CALLER__) }
   end
 
   defp descriptor({ :in, _, [{ name, _, _ }, { a, b }] }, __CALLER__) do
     { name, [descriptor(a, __CALLER__), descriptor(b, __CALLER__)] }
-  end
-
-  defp descriptor({ :__aliases__, _, _ } = record_alias, __CALLER__) do
-    record(record_alias, __CALLER__)
-  end
-
-  defp descriptor({ :__MODULE__, _, _ } = record_alias, __CALLER__) do
-    record(record_alias, __CALLER__)
-  end
-
-  defp descriptor({ { :., _, [Kernel, :access] }, _, [record_alias, descriptors] }, __CALLER__) do
-    for  = record(record_alias, __CALLER__)
-    desc = for |> elem(1) |> Enum.map fn name ->
-      if desc = descriptors[name] do
-        { name, descriptor(desc, __CALLER__) }
-      else
-        name
-      end
-    end
-
-    for |> set_elem(1, desc)
-  end
-
-  defp descriptor(name, __CALLER__) when is_atom(name) do
-    record(name, __CALLER__)
   end
 
   defp descriptor({ name, _, _ }, _) do
@@ -247,17 +176,6 @@ defmodule Exquisite do
 
   defp head({ atom, descriptor }, table, name, last) do
     cond do
-      # it's a record
-      match?("Elixir." <> _, atom_to_binary(atom)) ->
-        { result, table, last } = Enum.reduce descriptor, { [], table, last }, fn(desc, { results, table, last }) ->
-          case head(desc, table, name, last) do
-            { result, table, last } ->
-              { [result | results], table, last }
-          end
-        end
-
-        { [atom | Enum.reverse(result)] |> list_to_tuple, table, last }
-
       # it's a list of names
       is_list(descriptor) ->
         { result, table, last } = Enum.reduce descriptor, { [], table, last }, fn(desc, { results, table, last }) ->
@@ -410,7 +328,7 @@ defmodule Exquisite do
   # is_record(id, name)
   defp internal({ :is_record, _, [ref, name] } = whole, table, __CALLER__) do
     if id = identify(ref, table) do
-      { :is_record, id, name, length(record(name, __CALLER__) |> elem(1)) + 1 }
+      { :is_record, id, name }
     else
       external(whole)
     end
@@ -537,28 +455,5 @@ defmodule Exquisite do
 
   def convert(data) do
     data
-  end
-
-  defp record(record_alias, __CALLER__) do
-    record_name = Macro.expand(record_alias, __CALLER__)
-
-    try do
-      if :lists.member(record_name, __CALLER__.context_modules) and Module.open?(record_name) do
-        { record_name, Keyword.keys(Module.get_attribute(record_name, :record_fields)) }
-      else
-        { record_name, Keyword.keys(record_name.__record__(:fields)) }
-      end
-    rescue
-      UndefinedFunctionError ->
-        case :code.ensure_loaded(record_name) do
-          { :error, _ } ->
-            :elixir_aliases.ensure_loaded(__CALLER__.line, __CALLER__.file, record_name, __CALLER__.context_modules)
-
-            record(record_alias, __CALLER__)
-
-          _ ->
-            raise ArgumentError, message: "cannot use module #{inspect record_name} in match because it does not export __record__/1"
-        end
-    end
   end
 end
