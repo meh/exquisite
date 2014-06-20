@@ -46,13 +46,4 @@ defmodule ExquisiteTest do
 
     assert Exquisite.run!(s, { { 1, 1 }, 3 }) == 3
   end
-
-  defmodule Helpers do
-    defmacro get_by_key(module, key, value) do
-      quote do
-        s = Exquisite.match unquote(module),
-          where: unquote(key) == unquote(value)
-      end
-    end
-  end
 end
