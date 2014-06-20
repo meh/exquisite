@@ -46,4 +46,14 @@ defmodule ExquisiteTest do
 
     assert Exquisite.run!(s, { { 1, 1 }, 3 }) == 3
   end
+
+  test "works with a value" do
+    s = Exquisite.match { a, 2 },
+      where: a == 3
+
+
+    assert Exquisite.run!(s, { 3, 2 })
+    refute Exquisite.run!(s, { 3, 3 })
+    refute Exquisite.run!(s, { 2, 2 })
+  end
 end
