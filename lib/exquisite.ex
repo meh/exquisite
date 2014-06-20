@@ -161,7 +161,7 @@ defmodule Exquisite do
       end
     end
 
-    { Enum.reverse(result) |> list_to_tuple, table, last }
+    { Enum.reverse(result) |> List.to_tuple, table, last }
   end
 
   defp head(:_, table, _, last) do
@@ -179,20 +179,20 @@ defmodule Exquisite do
       # it's a list of names
       is_list(descriptor) ->
         { result, table, last } = Enum.reduce descriptor, { [], table, last }, fn(desc, { results, table, last }) ->
-          case head(desc, table, [atom_to_binary(atom) | name], last) do
+          case head(desc, table, [Atom.to_string(atom) | name], last) do
             { result, table, last } ->
               { [result | results], table, last }
           end
         end
 
-        result = Enum.reverse(result) |> list_to_tuple
+        result = Enum.reverse(result) |> List.to_tuple
         table  = Dict.put(table, name_for(atom, name), result)
 
         { result, table, last }
 
       # it's a named list of names
       is_tuple(descriptor) ->
-        case head(descriptor, table, [atom_to_binary(atom) | name], last) do
+        case head(descriptor, table, [Atom.to_string(atom) | name], last) do
           { result, table, last } ->
             table = Dict.put(table, name_for(atom, name), result)
 
@@ -202,7 +202,7 @@ defmodule Exquisite do
   end
 
   defp name_for(new, current) do
-    [atom_to_binary(new) | current] |> Enum.reverse |> Enum.join(".")
+    [Atom.to_string(new) | current] |> Enum.reverse |> Enum.join(".")
   end
 
   defp condition(clause, table, __CALLER__) do
@@ -396,7 +396,7 @@ defmodule Exquisite do
 
   # { a, b, c }
   defp internal({ :'{}', _, desc }, table, __CALLER__) do
-    { Enum.map(desc, &internal(&1, table, __CALLER__)) |> list_to_tuple }
+    { Enum.map(desc, &internal(&1, table, __CALLER__)) |> List.to_tuple }
   end
 
   # foo
@@ -429,15 +429,15 @@ defmodule Exquisite do
   end
 
   defp identify({{ :., _, [left, name] }, _, _ }) do
-    identify(left) <> "." <> atom_to_binary(name)
+    identify(left) <> "." <> Atom.to_string(name)
   end
 
   defp identify({ name, _, _ }) do
-    atom_to_binary(name)
+    Atom.to_string(name)
   end
 
   defp identify(name) do
-    atom_to_binary(name)
+    Atom.to_string(name)
   end
 
   defp external(whole) do
@@ -446,7 +446,7 @@ defmodule Exquisite do
 
   @doc false
   def convert(data) when is_tuple(data) do
-    { tuple_to_list(data) |> Enum.map(&convert(&1)) |> list_to_tuple }
+    { Tuple.to_list(data) |> Enum.map(&convert(&1)) |> List.to_tuple }
   end
 
   def convert(data) when is_list(data) do
