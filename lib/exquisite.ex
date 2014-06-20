@@ -81,7 +81,7 @@ defmodule Exquisite do
   defmacro match(clause, rest \\ [])
 
   # Exquisite.match a in { _, _, _ }, *
-  defmacro match({ :in, _, [_, { :"{}", _, [_] }] } = desc, rest) do
+  defmacro match({ :in, _, [_, { :{}, _, _ }] } = desc, rest) do
     execute(desc, rest)
   end
 
@@ -91,7 +91,7 @@ defmodule Exquisite do
   end
 
   # Exquisite.match { a, b, c }, *
-  defmacro match({ :"{}", _, _ } = desc, rest) do
+  defmacro match({ :{}, _, _ } = desc, rest) do
     execute(desc, rest)
   end
 
@@ -100,7 +100,7 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
-  defp descriptor({ :"{}", _, desc }, __CALLER__) do
+  defp descriptor({ :{}, _, desc }, __CALLER__) do
     Enum.map desc, &descriptor(&1, __CALLER__)
   end
 
@@ -112,7 +112,7 @@ defmodule Exquisite do
     { name, descriptor(desc, __CALLER__) }
   end
 
-  defp descriptor({ :in, _, [{ name, _, _ }, { :"{}", _, _ } = desc] }, __CALLER__) do
+  defp descriptor({ :in, _, [{ name, _, _ }, { :{}, _, _ } = desc] }, __CALLER__) do
     { name, descriptor(desc, __CALLER__) }
   end
 
@@ -399,7 +399,7 @@ defmodule Exquisite do
   end
 
   # { a, b, c }
-  defp internal({ :'{}', _, desc }, table, __CALLER__) do
+  defp internal({ :{}, _, desc }, table, __CALLER__) do
     { Enum.map(desc, &internal(&1, table, __CALLER__)) |> List.to_tuple }
   end
 
