@@ -18,7 +18,7 @@ defmodule Exquisite do
     end
   end
 
-  def run(spec, what) when is_list(what) do
+  def run(spec, what) when what |> is_list do
     if :ets.is_compiled_ms(spec) do
       :ets.match_spec_run(what, spec)
     else
@@ -33,7 +33,7 @@ defmodule Exquisite do
   end
 
   @spec run!(spec, tuple | [tuple]) :: term | no_return
-  def run!(spec, what) when is_tuple(what) do
+  def run!(spec, what) when what |> is_tuple do
     case :ets.test_ms(what, spec) do
       { :ok, result } ->
         result
@@ -43,7 +43,7 @@ defmodule Exquisite do
     end
   end
 
-  def run!(spec, what) when is_list(what) do
+  def run!(spec, what) when what |> is_list do
     :ets.match_spec_run(what, :ets.match_spec_compile(spec))
   end
 
@@ -100,10 +100,6 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
-  defmacro match(name, rest) when is_atom(name) do
-    execute(name, rest)
-  end
-
   defp descriptor({ :"{}", _, desc }, __CALLER__) do
     Enum.map desc, &descriptor(&1, __CALLER__)
   end
@@ -128,6 +124,10 @@ defmodule Exquisite do
     name
   end
 
+  defp descriptor(value, _) do
+    { value }
+  end
+
   defp transform(descriptor, clauses, __CALLER__) do
     { head, table } = head(descriptor)
 
@@ -147,13 +147,13 @@ defmodule Exquisite do
   end
 
   defp head(descriptor) do
-    case head(descriptor, HashDict.new, [], 1) do
+    case head(descriptor, %{}, [], 1) do
       { result, table, _ } ->
         { result, table }
     end
   end
 
-  defp head(descriptor, table, name, last) when is_list(descriptor) do
+  defp head(descriptor, table, name, last) when descriptor |> is_list do
     { result, table, last } = Enum.reduce descriptor, { [], table, last }, fn(desc, { results, table, last }) ->
       case head(desc, table, name, last) do
         { result, table, last } ->
@@ -168,7 +168,7 @@ defmodule Exquisite do
     { :_, table, last }
   end
 
-  defp head(descriptor, table, name, last) when is_atom(descriptor) do
+  defp head(descriptor, table, name, last) when descriptor |> is_atom do
     reference = :"$#{last}"
 
     { reference, Dict.put(table, name_for(descriptor, name), reference), last + 1 }
@@ -177,7 +177,7 @@ defmodule Exquisite do
   defp head({ atom, descriptor }, table, name, last) do
     cond do
       # it's a list of names
-      is_list(descriptor) ->
+      descriptor |> is_list ->
         { result, table, last } = Enum.reduce descriptor, { [], table, last }, fn(desc, { results, table, last }) ->
           case head(desc, table, [Atom.to_string(atom) | name], last) do
             { result, table, last } ->
@@ -191,7 +191,7 @@ defmodule Exquisite do
         { result, table, last }
 
       # it's a named list of names
-      is_tuple(descriptor) ->
+      descriptor |> is_tuple ->
         case head(descriptor, table, [Atom.to_string(atom) | name], last) do
           { result, table, last } ->
             table = Dict.put(table, name_for(atom, name), result)
@@ -199,6 +199,10 @@ defmodule Exquisite do
             { result, table, last }
         end
     end
+  end
+
+  defp head({ value }, table, _name, last) do
+    { value, table, last }
   end
 
   defp name_for(new, current) do
@@ -409,12 +413,12 @@ defmodule Exquisite do
   end
 
   # list
-  defp internal(value, table, __CALLER__) when is_list(value) do
+  defp internal(value, table, __CALLER__) when value |> is_list do
     Enum.map value, &internal(&1, table, __CALLER__)
   end
 
   # number or string
-  defp internal(value, _, _) when is_binary(value) or is_number(value) do
+  defp internal(value, _, _) when value |> is_binary or value |> is_number do
     value
   end
 
@@ -445,11 +449,11 @@ defmodule Exquisite do
   end
 
   @doc false
-  def convert(data) when is_tuple(data) do
+  def convert(data) when data |> is_tuple do
     { Tuple.to_list(data) |> Enum.map(&convert(&1)) |> List.to_tuple }
   end
 
-  def convert(data) when is_list(data) do
+  def convert(data) when data |> is_list do
     Enum.map data, &convert(&1)
   end
 
