@@ -4,7 +4,7 @@ defmodule Exquisite.Mixfile do
   def project do
     [ app: :exquisite,
       version: "0.1.4",
-      elixir: "~> 1.0.0-rc1",
+      elixir: ">= 1.0.0",
       package: package,
       description: "DSL to match_spec" ]
   end
