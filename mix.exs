@@ -3,8 +3,7 @@ defmodule Exquisite.Mixfile do
 
   def project do
     [ app: :exquisite,
-      version: "0.1.6",
-      elixir: "~> 1.0.0-rc1 or ~> 1.1.0-rc.0 or ~> 1.2.0-rc.0",
+      version: "0.1.7",
       package: package,
       description: "DSL to match_spec" ]
   end
