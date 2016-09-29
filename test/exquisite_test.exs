@@ -56,4 +56,12 @@ defmodule ExquisiteTest do
     refute Exquisite.run!(s, { 3, 3 })
     refute Exquisite.run!(s, { 2, 2 })
   end
+
+  test "works elem specification" do
+    s = Exquisite.match foo in { a, b },
+      where:  elem(foo.a, 0) == 1,
+      select: foo.b
+
+    assert Exquisite.run!(s, { { 1, 2 }, 3 }) == 3
+  end
 end

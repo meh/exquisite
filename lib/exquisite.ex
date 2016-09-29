@@ -350,7 +350,7 @@ defmodule Exquisite do
   # elem(id, index)
   defp internal({ :elem, _, [ref, index] } = whole, table, __CALLER__) do
     if id = identify(ref, table) do
-      { :element, id, index + 1 }
+      { :element, index + 1, id }
     else
       external(whole)
     end
