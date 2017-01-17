@@ -171,7 +171,7 @@ defmodule Exquisite do
   defp head(descriptor, table, name, last) when descriptor |> is_atom do
     reference = :"$#{last}"
 
-    { reference, Dict.put(table, name_for(descriptor, name), reference), last + 1 }
+    { reference, Map.put(table, name_for(descriptor, name), reference), last + 1 }
   end
 
   defp head({ atom, descriptor }, table, name, last) do
@@ -186,7 +186,7 @@ defmodule Exquisite do
         end
 
         result = Enum.reverse(result) |> List.to_tuple
-        table  = Dict.put(table, name_for(atom, name), result)
+        table  = Map.put(table, name_for(atom, name), result)
 
         { result, table, last }
 
@@ -194,7 +194,7 @@ defmodule Exquisite do
       descriptor |> is_tuple ->
         case head(descriptor, table, [Atom.to_string(atom) | name], last) do
           { result, table, last } ->
-            table = Dict.put(table, name_for(atom, name), result)
+            table = Map.put(table, name_for(atom, name), result)
 
             { result, table, last }
         end
@@ -429,7 +429,7 @@ defmodule Exquisite do
 
   # identify a name from a table
   defp identify(name, table) do
-    Dict.get(table, identify(name))
+    Map.get(table, identify(name))
   end
 
   defp identify({{ :., _, [left, name] }, _, _ }) do
