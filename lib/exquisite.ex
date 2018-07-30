@@ -100,24 +100,24 @@ defmodule Exquisite do
     execute(desc, rest)
   end
 
-  defp descriptor({ :{}, _, desc }, __CALLER__) do
-    Enum.map desc, &descriptor(&1, __CALLER__)
+  defp descriptor({ :{}, _, desc }, caller) do
+    Enum.map desc, &descriptor(&1, caller)
   end
 
-  defp descriptor({ a, b }, __CALLER__) do
-    [descriptor(a, __CALLER__), descriptor(b, __CALLER__)]
+  defp descriptor({ a, b }, caller) do
+    [descriptor(a, caller), descriptor(b, caller)]
   end
 
-  defp descriptor({ :in, _, [{ name, _, _ }, { :in, _, _ } = desc] }, __CALLER__) do
-    { name, descriptor(desc, __CALLER__) }
+  defp descriptor({ :in, _, [{ name, _, _ }, { :in, _, _ } = desc] }, caller) do
+    { name, descriptor(desc, caller) }
   end
 
-  defp descriptor({ :in, _, [{ name, _, _ }, { :{}, _, _ } = desc] }, __CALLER__) do
-    { name, descriptor(desc, __CALLER__) }
+  defp descriptor({ :in, _, [{ name, _, _ }, { :{}, _, _ } = desc] }, caller) do
+    { name, descriptor(desc, caller) }
   end
 
-  defp descriptor({ :in, _, [{ name, _, _ }, { a, b }] }, __CALLER__) do
-    { name, [descriptor(a, __CALLER__), descriptor(b, __CALLER__)] }
+  defp descriptor({ :in, _, [{ name, _, _ }, { a, b }] }, caller) do
+    { name, [descriptor(a, caller), descriptor(b, caller)] }
   end
 
   defp descriptor({ name, _, _ }, _) do
@@ -128,17 +128,17 @@ defmodule Exquisite do
     { value }
   end
 
-  defp transform(descriptor, clauses, __CALLER__) do
+  defp transform(descriptor, clauses, caller) do
     { head, table } = head(descriptor)
 
     condition = if where = clauses[:where] do
-      condition(where, table, __CALLER__)
+      condition(where, table, caller)
     else
       []
     end
 
     body = if select = clauses[:select] do
-      body(select, table, __CALLER__)
+      body(select, table, caller)
     else
       [:'$_']
     end
@@ -209,119 +209,119 @@ defmodule Exquisite do
     [Atom.to_string(new) | current] |> Enum.reverse |> Enum.join(".")
   end
 
-  defp condition(clause, table, __CALLER__) do
-    [internal(Macro.expand(clause, __CALLER__), table, __CALLER__)]
+  defp condition(clause, table, caller) do
+    [internal(Macro.expand(clause, caller), table, caller)]
   end
 
-  defp body(clause, table, __CALLER__) do
-    [internal(Macro.expand(clause, __CALLER__), table, __CALLER__)]
+  defp body(clause, table, caller) do
+    [internal(Macro.expand(clause, caller), table, caller)]
   end
 
   # operator destructuring
-  defp internal({ :__op__, _, [name, left, right] }, table, __CALLER__) do
-    internal({ name, [], [left, right] }, table, __CALLER__)
+  defp internal({ :__op__, _, [name, left, right] }, table, caller) do
+    internal({ name, [], [left, right] }, table, caller)
   end
 
-  defp internal({ :__op__, _, [name, right] }, table, __CALLER__) do
-    internal({ name, [], [right] }, table, __CALLER__)
+  defp internal({ :__op__, _, [name, right] }, table, caller) do
+    internal({ name, [], [right] }, table, caller)
   end
 
-  defp internal({ { :., _, [:erlang, name]}, _, [left, right] }, table, __CALLER__) do
-    internal({ name, [], [left, right] }, table, __CALLER__)
+  defp internal({ { :., _, [:erlang, name]}, _, [left, right] }, table, caller) do
+    internal({ name, [], [left, right] }, table, caller)
   end
 
-  defp internal({ { :., _, [:erlang, name]}, _, [right] }, table, __CALLER__) do
-    internal({ name, [], [right] }, table, __CALLER__)
+  defp internal({ { :., _, [:erlang, name]}, _, [right] }, table, caller) do
+    internal({ name, [], [right] }, table, caller)
   end
 
   # not
-  defp internal({ :not, _, [a] }, table, __CALLER__) do
-    { :not, internal(a, table, __CALLER__) }
+  defp internal({ :not, _, [a] }, table, caller) do
+    { :not, internal(a, table, caller) }
   end
 
   # and, gets converted to andalso
-  defp internal({ op, _, [left, right] }, table, __CALLER__) when op in [:and, :andalso] do
-    { :andalso, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ op, _, [left, right] }, table, caller) when op in [:and, :andalso] do
+    { :andalso, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # or, gets converted to orelse
-  defp internal({ op, _, [left, right] }, table, __CALLER__) when op in [:or, :orelse] do
-    { :orelse, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ op, _, [left, right] }, table, caller) when op in [:or, :orelse] do
+    { :orelse, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # xor
-  defp internal({ :xor, _, [left, right] }, table, __CALLER__) do
-    { :xor, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :xor, _, [left, right] }, table, caller) do
+    { :xor, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # >
-  defp internal({ :>, _, [left, right] }, table, __CALLER__) do
-    { :>, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :>, _, [left, right] }, table, caller) do
+    { :>, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # >=
-  defp internal({ :>=, _, [left, right] }, table, __CALLER__) do
-    { :>=, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :>=, _, [left, right] }, table, caller) do
+    { :>=, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # <
-  defp internal({ :<, _, [left, right] }, table, __CALLER__) do
-    { :<, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :<, _, [left, right] }, table, caller) do
+    { :<, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # <=, gets converted to =<
-  defp internal({ :<=, _, [left, right] }, table, __CALLER__) do
-    { :'=<', internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :<=, _, [left, right] }, table, caller) do
+    { :'=<', internal(left, table, caller), internal(right, table, caller) }
   end
 
   # ==
-  defp internal({ :==, _, [left, right] }, table, __CALLER__) do
-    { :==, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :==, _, [left, right] }, table, caller) do
+    { :==, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # ===, gets converted to =:=
-  defp internal({ :===, _, [left, right] }, table, __CALLER__) do
-    { :'=:=', internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :===, _, [left, right] }, table, caller) do
+    { :'=:=', internal(left, table, caller), internal(right, table, caller) }
   end
 
   # != gets converted to /=
-  defp internal({ :!=, _, [left, right] }, table, __CALLER__) do
-    { :'/=', internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :!=, _, [left, right] }, table, caller) do
+    { :'/=', internal(left, table, caller), internal(right, table, caller) }
   end
 
   # !== gets converted to =/=
-  defp internal({ :!==, _, [left, right] }, table, __CALLER__) do
-    { :'=/=', internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :!==, _, [left, right] }, table, caller) do
+    { :'=/=', internal(left, table, caller), internal(right, table, caller) }
   end
 
   # +
-  defp internal({ :+, _, [left, right] }, table, __CALLER__) do
-    { :+, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :+, _, [left, right] }, table, caller) do
+    { :+, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # -
-  defp internal({ :-, _, [left, right] }, table, __CALLER__) do
-    { :-, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :-, _, [left, right] }, table, caller) do
+    { :-, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # *
-  defp internal({ :*, _, [left, right] }, table, __CALLER__) do
-    { :*, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :*, _, [left, right] }, table, caller) do
+    { :*, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # /, gets converted to div
-  defp internal({ :/, _, [left, right] }, table, __CALLER__) do
-    { :div, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :/, _, [left, right] }, table, caller) do
+    { :div, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # rem
-  defp internal({ :rem, _, [left, right] }, table, __CALLER__) do
-    { :rem, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ :rem, _, [left, right] }, table, caller) do
+    { :rem, internal(left, table, caller), internal(right, table, caller) }
   end
 
   @function [ :is_atom, :is_float, :is_integer, :is_list, :is_number,
               :is_pid, :is_port, :is_reference, :is_tuple, :is_binary ]
-  defp internal({ name, _, [ref] } = whole, table, __CALLER__) when name in @function do
+  defp internal({ name, _, [ref] } = whole, table, caller) when name in @function do
     if id = identify(ref, table) do
       { name, id }
     else
@@ -330,7 +330,7 @@ defmodule Exquisite do
   end
 
   # is_record(id, name)
-  defp internal({ :is_record, _, [ref, name] } = whole, table, __CALLER__) do
+  defp internal({ :is_record, _, [ref, name] } = whole, table, caller) do
     if id = identify(ref, table) do
       { :is_record, id, name }
     else
@@ -339,7 +339,7 @@ defmodule Exquisite do
   end
 
   # is_record(id, name, size)
-  defp internal({ :is_record, _, [ref, name, size] } = whole, table, __CALLER__) do
+  defp internal({ :is_record, _, [ref, name, size] } = whole, table, caller) do
     if id = identify(ref, table) do
       { :is_record, id, name, size }
     else
@@ -348,7 +348,7 @@ defmodule Exquisite do
   end
 
   # elem(id, index)
-  defp internal({ :elem, _, [ref, index] } = whole, table, __CALLER__) do
+  defp internal({ :elem, _, [ref, index] } = whole, table, caller) do
     if id = identify(ref, table) do
       { :element, index + 1, id }
     else
@@ -357,7 +357,7 @@ defmodule Exquisite do
   end
 
   @function [ :abs, :hd, :length, :round, :tl, :trunc ]
-  defp internal({ name, _, [ref] } = whole, table, __CALLER__) when name in @function do
+  defp internal({ name, _, [ref] } = whole, table, caller) when name in @function do
     if id = identify(ref, table) do
       { name, id }
     else
@@ -366,7 +366,7 @@ defmodule Exquisite do
   end
 
   # bnot foo
-  defp internal({ :bnot, _, [ref] } = whole, table, __CALLER__) do
+  defp internal({ :bnot, _, [ref] } = whole, table, caller) do
     if id = identify(ref, table) do
       { :bnot, id }
     else
@@ -375,8 +375,8 @@ defmodule Exquisite do
   end
 
   @function [ :band, :bor, :bxor, :bsl, :bsr ]
-  defp internal({ name, _, [left, right] }, table, __CALLER__) when name in @function do
-    { name, internal(left, table, __CALLER__), internal(right, table, __CALLER__) }
+  defp internal({ name, _, [left, right] }, table, caller) when name in @function do
+    { name, internal(left, table, caller), internal(right, table, caller) }
   end
 
   @function [ :node, :self ]
@@ -385,7 +385,7 @@ defmodule Exquisite do
   end
 
   # foo.bar
-  defp internal({{ :., _, _ }, _, _ } = whole, table, __CALLER__) do
+  defp internal({{ :., _, _ }, _, _ } = whole, table, caller) do
     if id = identify(whole, table) do
       id
     else
@@ -394,17 +394,17 @@ defmodule Exquisite do
   end
 
   # { a, b }
-  defp internal({ a, b }, table, __CALLER__) do
-    {{ internal(a, table, __CALLER__), internal(b, table, __CALLER__) }}
+  defp internal({ a, b }, table, caller) do
+    {{ internal(a, table, caller), internal(b, table, caller) }}
   end
 
   # { a, b, c }
-  defp internal({ :{}, _, desc }, table, __CALLER__) do
-    { Enum.map(desc, &internal(&1, table, __CALLER__)) |> List.to_tuple }
+  defp internal({ :{}, _, desc }, table, caller) do
+    { Enum.map(desc, &internal(&1, table, caller)) |> List.to_tuple }
   end
 
   # foo
-  defp internal({ ref, _, _ } = whole, table, __CALLER__) do
+  defp internal({ ref, _, _ } = whole, table, caller) do
     if id = identify(ref, table) do
       id
     else
@@ -413,8 +413,8 @@ defmodule Exquisite do
   end
 
   # list
-  defp internal(value, table, __CALLER__) when value |> is_list do
-    Enum.map value, &internal(&1, table, __CALLER__)
+  defp internal(value, table, caller) when value |> is_list do
+    Enum.map value, &internal(&1, table, caller)
   end
 
   # number or string
