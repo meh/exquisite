@@ -3,14 +3,14 @@ defmodule Exquisite.Mixfile do
 
   def project do
     [ app: :exquisite,
-      version: "0.1.8",
+      version: "0.1.9",
       deps: deps(),
       package: package(),
       description: "DSL to match_spec" ]
   end
 
   defp deps do
-    [ { :ex_doc, "~> 0.14", only: [:dev] } ]
+    [ { :ex_doc, "~> 0.16", only: [:dev] } ]
   end
 
   defp package do
