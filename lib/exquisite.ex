@@ -5,8 +5,16 @@
 #   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
 #
 #  0. You just DO WHAT THE FUCK YOU WANT TO.
-
 defmodule Exquisite do
+
+  def x &&& y do
+    x && y
+  end
+
+  def x ||| y do
+    x || y
+  end
+
   @type spec :: :ets.match_spec | :ets.compiled_match_spec
 
   @spec run(spec, tuple | [tuple]) :: { :ok, term } | { :error, term }
@@ -210,7 +218,24 @@ defmodule Exquisite do
   end
 
   defp condition(clause, table, caller) do
-    [internal(Macro.expand(clause, caller), table, caller)]
+
+    hack = cond do
+      is_tuple(clause) ->
+        clause
+        |> Tuple.to_list()
+        |> Enum.map(
+             fn(x) ->
+               case x do
+                 :and -> :andalso
+                 :or -> :orelse
+                 v -> v
+               end
+             end)
+        |> List.to_tuple()
+      true -> clause
+    end
+
+    [internal(Macro.expand(hack, caller), table, caller)]
   end
 
   defp body(clause, table, caller) do
@@ -240,12 +265,12 @@ defmodule Exquisite do
   end
 
   # and, gets converted to andalso
-  defp internal({ op, _, [left, right] }, table, caller) when op in [:and, :andalso] do
+  defp internal({ op, _, [left, right] }, table, caller) when op in [:and, :andalso, :&&&] do
     { :andalso, internal(left, table, caller), internal(right, table, caller) }
   end
 
   # or, gets converted to orelse
-  defp internal({ op, _, [left, right] }, table, caller) when op in [:or, :orelse] do
+  defp internal({ op, _, [left, right] }, table, caller) when op in [:or, :orelse, :|||] do
     { :orelse, internal(left, table, caller), internal(right, table, caller) }
   end
 
@@ -321,7 +346,7 @@ defmodule Exquisite do
 
   @function [ :is_atom, :is_float, :is_integer, :is_list, :is_number,
               :is_pid, :is_port, :is_reference, :is_tuple, :is_binary ]
-  defp internal({ name, _, [ref] } = whole, table, caller) when name in @function do
+  defp internal({ name, _, [ref] } = whole, table, _caller) when name in @function do
     if id = identify(ref, table) do
       { name, id }
     else
@@ -330,7 +355,7 @@ defmodule Exquisite do
   end
 
   # is_record(id, name)
-  defp internal({ :is_record, _, [ref, name] } = whole, table, caller) do
+  defp internal({ :is_record, _, [ref, name] } = whole, table, _caller) do
     if id = identify(ref, table) do
       { :is_record, id, name }
     else
@@ -339,7 +364,7 @@ defmodule Exquisite do
   end
 
   # is_record(id, name, size)
-  defp internal({ :is_record, _, [ref, name, size] } = whole, table, caller) do
+  defp internal({ :is_record, _, [ref, name, size] } = whole, table, _caller) do
     if id = identify(ref, table) do
       { :is_record, id, name, size }
     else
@@ -348,7 +373,7 @@ defmodule Exquisite do
   end
 
   # elem(id, index)
-  defp internal({ :elem, _, [ref, index] } = whole, table, caller) do
+  defp internal({ :elem, _, [ref, index] } = whole, table, _caller) do
     if id = identify(ref, table) do
       { :element, index + 1, id }
     else
@@ -357,7 +382,7 @@ defmodule Exquisite do
   end
 
   @function [ :abs, :hd, :length, :round, :tl, :trunc ]
-  defp internal({ name, _, [ref] } = whole, table, caller) when name in @function do
+  defp internal({ name, _, [ref] } = whole, table, _caller) when name in @function do
     if id = identify(ref, table) do
       { name, id }
     else
@@ -366,7 +391,7 @@ defmodule Exquisite do
   end
 
   # bnot foo
-  defp internal({ :bnot, _, [ref] } = whole, table, caller) do
+  defp internal({ :bnot, _, [ref] } = whole, table, _caller) do
     if id = identify(ref, table) do
       { :bnot, id }
     else
@@ -385,7 +410,7 @@ defmodule Exquisite do
   end
 
   # foo.bar
-  defp internal({{ :., _, _ }, _, _ } = whole, table, caller) do
+  defp internal({{ :., _, _ }, _, _ } = whole, table, _caller) do
     if id = identify(whole, table) do
       id
     else
@@ -404,7 +429,7 @@ defmodule Exquisite do
   end
 
   # foo
-  defp internal({ ref, _, _ } = whole, table, caller) do
+  defp internal({ ref, _, _ } = whole, table, _caller) do
     if id = identify(ref, table) do
       id
     else
